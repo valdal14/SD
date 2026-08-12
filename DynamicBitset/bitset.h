@@ -53,5 +53,6 @@ void bitset_clear(bitset_t *set, size_t index);
 bool bitset_test(bitset_t *set, size_t index);
 
 #define ERRN0 printf("Could not allocate space for the set");
+#define WARN0(x) printf("Bit at index %lu is already set to 1\n", x);
 
 #endif

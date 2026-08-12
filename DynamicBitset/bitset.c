@@ -5,6 +5,9 @@ int main(void)
 {
     bitset_t set = bitset_create(254);
     printf("Sets allocated at address %p\n", set.array);
+    
+    bitset_set(&set, 0);
+    bitset_set(&set, 0);
     bitset_destroy(&set);
     return 0;
 }
@@ -37,4 +40,18 @@ bitset_t bitset_create(size_t num_bits)
 void bitset_destroy(bitset_t *set)
 {
     free(set->array);
+}
+
+/**
+ * @brief Sets the bit at given index
+ * @param bitset_t set pointer
+ * @param size_t index
+ * @return void
+ */
+void bitset_set(bitset_t *set, size_t index)
+{
+    if((set->array[index] & BIT(index)) == 0)
+        set->array[index] |= BIT(index);
+    else
+        WARN0(index);
 }
