@@ -5,6 +5,7 @@ int main(void)
 {
     bitset_t set = bitset_create(254);
     printf("Sets allocated at address %p\n", set.array);
+    bitset_destroy(&set);
     return 0;
 }
 
@@ -26,4 +27,14 @@ bitset_t bitset_create(size_t num_bits)
     }
 
     return set;
+}
+
+/**
+ * @brief Destroyes the bitset_t instance
+ * @param bitset_t set pointer
+ * @return void
+ */
+void bitset_destroy(bitset_t *set)
+{
+    free(set->array);
 }
