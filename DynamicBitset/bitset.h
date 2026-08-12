@@ -52,4 +52,6 @@ void bitset_clear(bitset_t *set, size_t index);
  */
 bool bitset_test(bitset_t *set, size_t index);
 
+#define ERRN0 printf("Could not allocate space for the set");
+
 #endif
