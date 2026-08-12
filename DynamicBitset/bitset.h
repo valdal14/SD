@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define MAX_BIT_SIZE 254
 #define BIT(x) (1 << (x))
 
 typedef struct
@@ -53,6 +54,9 @@ void bitset_clear(bitset_t *set, size_t index);
 bool bitset_test(bitset_t *set, size_t index);
 
 #define ERRN0 printf("Could not allocate space for the set");
+#define ERRN1 printf("Set cannot be greater than %d bit\n", MAX_BIT_SIZE);
 #define WARN0(x) printf("Bit at index %lu is already set to 1\n", x);
+#define WARN1(x) printf("Bit at index %lu is already set to 0\n", x);
+#define PTRSET(x, y) printf("Bit at index %lu is set to %llu\n", x, y); 
 
 #endif
