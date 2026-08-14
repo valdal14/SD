@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
+// Concurrency variables
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_full = PTHREAD_COND_INITIALIZER;
 
 #define MAX_DEL_PKT 16 
 
@@ -15,17 +21,21 @@ typedef struct Packet
 typedef struct Deliverable
 {
     struct Packet *packets; // 16 bytes
-    void(* deliver)(struct Deliverable *deliverable); // 8 bytes 
-    // --- 24 bytes Deliverable ---
+    void *(* deliver)(void *arg); // 8 bytes 
+    uint8_t size; // 1 byte  
+    uint8_t index; // 1 byte 
+    uint8_t tail; // 1 byte 
+    uint8_t capacity; // 1 byte 
+    uint8_t _paddings[4]; // 4 bytes 
+    // --- 32 bytes Deliverable ---
 } Deliverable;
 
-
-/**
- * @brief Callback used to deliver packets 
- * @param Deliverable deliverable pointer
- * @return void
- */
-void deliver(struct Deliverable *deliverable);
+typedef struct
+{
+    struct Deliverable *deliverable;
+    uint32_t id;
+    double val;
+} UDP;
 
 /**
  * @brief Allocates the space and init the Deliverable interface
@@ -44,22 +54,50 @@ void init_interface(Deliverable **deliverable);
  */
 void prepare_packet(Deliverable **deliverable, uint32_t id, double val);
 
+/**
+ * @brief Callback used to deliver packets 
+ * @param void arg pointer
+ * @return void pointer
+ */
+void *deliver(void *arg);
+
+/**
+ * @brief Helper function used to prepare the packets that needs
+ * to be delivered to test this API.
+ * @param UDP packet pointer 
+ * @param void*(*deliver)(void *arg) Callback
+ * @return void
+ */
+void process_packet(UDP *packet, void*(*deliver)(void *arg));
+
+/// Main Method -----------------------------------------------------------
+
 int main(void)
 {
     Deliverable *deliverable = NULL;
     init_interface(&deliverable);
     printf("Deliverable Interface up and running at address: %p\n", deliverable);
+    
+    UDP udp_packet;
+    udp_packet.deliverable = deliverable;
+    udp_packet.id = 0;
+    udp_packet.val = 14.23;
+
+    process_packet(&udp_packet, deliver);
     return 0;
 }
 
 /// Implementation --------------------------------------------------------
 
-void deliver(Deliverable *deliverable)
+void *deliver(void *arg)
 {
-    Packet *packets = deliverable->packets;
+    UDP *packet = (UDP *)arg;
 
-    for(uint8_t i = 0; i < MAX_DEL_PKT; i++)
-        printf("Packet ID: %d\n", (packets + i)->id);
+    printf("Deliving Packet with ID: %d\n", packet->id);
+    sleep(1); 
+    printf("Packet successufully delivered\n");
+    
+    return (void *)packet;
 }
 
 void init_interface(Deliverable **deliverable)
@@ -81,7 +119,16 @@ void init_interface(Deliverable **deliverable)
     }
     
     new->deliver = deliver;
+    new->capacity = MAX_DEL_PKT;
+    new->index = 0;
+    new->tail = 0;
+    new->size = 0;
     *deliverable = new;
 }
 
-
+void process_packet(UDP *packet, void*(*deliver)(void *arg))
+{
+    pthread_t worker;
+    pthread_create(&worker, NULL, deliver, (void *)packet);
+    pthread_join(worker, NULL);
+}
